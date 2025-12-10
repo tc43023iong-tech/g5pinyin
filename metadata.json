@@ -1,0 +1,5 @@
+{
+  "name": "g5 pinyin",
+  "description": "A cute and interactive Pinyin learning game for elementary students, powered by Gemini to generate endless practice words for confusing finals like in/ing, uan/uang, and ong/iong.",
+  "requestFramePermissions": []
+}
