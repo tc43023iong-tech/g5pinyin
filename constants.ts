@@ -2,6 +2,9 @@ import { GameConfig, QuizItem } from './types';
 
 export const TOTAL_QUESTIONS = 20;
 
+// The 8 options for the mixed mode
+const MIXED_OPTIONS = ['an', 'ang', 'in', 'ing', 'uan', 'uang', 'ong', 'iong'];
+
 export const GAME_MODES: GameConfig[] = [
   {
     id: 'uan-uang',
@@ -23,6 +26,13 @@ export const GAME_MODES: GameConfig[] = [
     description: '紅燈 (hong) 還是 熊貓 (xiong)？',
     pairs: ['ong', 'iong'],
     color: 'bg-candy-purple'
+  },
+  {
+    id: 'mixed',
+    name: '超級混合挑戰 (Super Mix) 🏆',
+    description: '8個韻母大亂鬥！你能選對嗎？',
+    pairs: MIXED_OPTIONS,
+    color: 'bg-candy-yellow'
   }
 ];
 
@@ -92,5 +102,28 @@ export const STATIC_QUESTIONS: Record<string, QuizItem[]> = {
     { character: '中', pinyin: 'zhōng', initial: 'zh', definition: 'Middle 🎯', correctFinal: 'ong', options: ['ong', 'iong'] },
     { character: '恐', pinyin: 'kǒng', initial: 'k', definition: 'Fear 😱', correctFinal: 'ong', options: ['ong', 'iong'] },
     { character: '送', pinyin: 'sòng', initial: 's', definition: 'Deliver 🎁', correctFinal: 'ong', options: ['ong', 'iong'] }
+  ],
+  'mixed': [
+    // Mixed questions combining various confusing finals + new an/ang
+    { character: '山', pinyin: 'shān', initial: 'sh', definition: 'Mountain ⛰️', correctFinal: 'an', options: MIXED_OPTIONS },
+    { character: '上', pinyin: 'shàng', initial: 'sh', definition: 'Up/Above ⬆️', correctFinal: 'ang', options: MIXED_OPTIONS },
+    { character: '船', pinyin: 'chuán', initial: 'ch', definition: 'Boat 🛶', correctFinal: 'uan', options: MIXED_OPTIONS },
+    { character: '床', pinyin: 'chuáng', initial: 'ch', definition: 'Bed 🛏️', correctFinal: 'uang', options: MIXED_OPTIONS },
+    { character: '心', pinyin: 'xīn', initial: 'x', definition: 'Heart ❤️', correctFinal: 'in', options: MIXED_OPTIONS },
+    { character: '星', pinyin: 'xīng', initial: 'x', definition: 'Star ⭐', correctFinal: 'ing', options: MIXED_OPTIONS },
+    { character: '紅', pinyin: 'hóng', initial: 'h', definition: 'Red 🔴', correctFinal: 'ong', options: MIXED_OPTIONS },
+    { character: '熊', pinyin: 'xióng', initial: 'x', definition: 'Bear 🐻', correctFinal: 'iong', options: MIXED_OPTIONS },
+    { character: '藍', pinyin: 'lán', initial: 'l', definition: 'Blue 🔵', correctFinal: 'an', options: MIXED_OPTIONS },
+    { character: '狼', pinyin: 'láng', initial: 'l', definition: 'Wolf 🐺', correctFinal: 'ang', options: MIXED_OPTIONS },
+    { character: '飯', pinyin: 'fàn', initial: 'f', definition: 'Rice 🍚', correctFinal: 'an', options: MIXED_OPTIONS },
+    { character: '胖', pinyin: 'pàng', initial: 'p', definition: 'Fat/Chubby 🐼', correctFinal: 'ang', options: MIXED_OPTIONS },
+    { character: '近', pinyin: 'jìn', initial: 'j', definition: 'Near 📍', correctFinal: 'in', options: MIXED_OPTIONS },
+    { character: '鏡', pinyin: 'jìng', initial: 'j', definition: 'Mirror 🪞', correctFinal: 'ing', options: MIXED_OPTIONS },
+    { character: '短', pinyin: 'duǎn', initial: 'd', definition: 'Short 📏', correctFinal: 'uan', options: MIXED_OPTIONS },
+    { character: '窗', pinyin: 'chuāng', initial: 'ch', definition: 'Window 🪟', correctFinal: 'uang', options: MIXED_OPTIONS },
+    { character: '龍', pinyin: 'lóng', initial: 'l', definition: 'Dragon 🐉', correctFinal: 'ong', options: MIXED_OPTIONS },
+    { character: '窮', pinyin: 'qióng', initial: 'q', definition: 'Poor 💸', correctFinal: 'iong', options: MIXED_OPTIONS },
+    { character: '傘', pinyin: 'sǎn', initial: 's', definition: 'Umbrella ☂️', correctFinal: 'an', options: MIXED_OPTIONS },
+    { character: '忙', pinyin: 'máng', initial: 'm', definition: 'Busy 🐝', correctFinal: 'ang', options: MIXED_OPTIONS }
   ]
 };

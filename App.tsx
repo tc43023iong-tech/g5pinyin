@@ -97,8 +97,19 @@ export default function App() {
     const question = questions[currentQuestionIndex];
     if (!question) return null;
 
+    // Adjust grid based on number of options. 
+    // If > 2 options, use a denser grid.
+    const isMultiOption = question.options.length > 2;
+    const gridClass = isMultiOption 
+      ? "grid-cols-2 md:grid-cols-4" 
+      : "grid-cols-2";
+    
+    // Adjust button size based on option count
+    const buttonPadding = isMultiOption ? "py-4 md:py-5" : "py-6";
+    const buttonText = isMultiOption ? "text-xl md:text-2xl" : "text-3xl";
+
     return (
-      <div className="flex flex-col min-h-screen max-w-lg mx-auto p-4 md:p-6 relative z-10">
+      <div className="flex flex-col min-h-screen max-w-2xl mx-auto p-4 md:p-6 relative z-10">
         {/* Header with Progress Bar */}
         <div className="flex flex-col mb-6">
            <div className="flex justify-between items-center mb-2">
@@ -141,7 +152,7 @@ export default function App() {
             </div>
 
             {/* Options */}
-            <div className="grid grid-cols-2 gap-4 mt-8">
+            <div className={`grid gap-3 md:gap-4 mt-6 w-full ${gridClass}`}>
               {question.options.map((opt) => {
                 let btnStyle = "bg-slate-50 text-slate-600 hover:bg-slate-100 border-2 border-slate-200";
                 
@@ -149,7 +160,9 @@ export default function App() {
                   if (opt === question.correctFinal) {
                     btnStyle = "bg-candy-green text-green-800 border-green-300 ring-2 ring-green-200";
                   } else if (opt !== question.correctFinal && feedback === 'wrong') {
-                     btnStyle = "opacity-50 bg-slate-50 text-slate-400 border-slate-100";
+                     // For 8 options, maybe just dim the unselected ones more aggressively or hide wrong answer feedback on the button itself to avoid clutter? 
+                     // Sticking to current logic: dim all wrong ones.
+                     btnStyle = "opacity-40 bg-slate-50 text-slate-400 border-slate-100";
                   }
                 }
 
@@ -160,7 +173,8 @@ export default function App() {
                     onClick={() => handleAnswer(opt)}
                     className={`
                       ${btnStyle} 
-                      py-6 text-3xl font-bold rounded-2xl transition-all duration-200
+                      ${buttonPadding} ${buttonText}
+                      font-bold rounded-2xl transition-all duration-200
                       ${!hasAnswered ? 'hover:scale-105 active:scale-95 shadow-sm' : ''}
                     `}
                   >
