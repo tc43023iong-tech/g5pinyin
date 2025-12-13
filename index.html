@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pinyin Pop! 拼音泡泡</title>
+    <title>Pinyin Pop! 拼音大對決</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
         theme: {
@@ -13,29 +13,58 @@
             fontFamily: {
               sans: ['Fredoka', 'sans-serif'],
               chinese: ['"ZCOOL KuaiLe"', 'cursive'],
+              mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
             },
             colors: {
-              candy: {
-                blue: '#A0D8EF',
-                pink: '#FFC4D6',
-                yellow: '#FFF5BA',
-                green: '#C1E1C1',
-                purple: '#D4C1EC',
+              chiikawa: {
+                white: '#FFFFFF',
+                cream: '#FFFDF5',
+                pink: '#FFDBED',
+                blue: '#E0F2FF',
+                green: '#E7F6E4',
+                yellow: '#FFFACD',
+                text: '#4A4A4A',
+                border: '#6B5B5B',
+              },
+              poke: {
+                red: '#FF3B30',
+                hp: '#4CD964',
+                hpylw: '#FFCC00',
+                hpred: '#FF3B30',
+                ui: '#2D3436',
+                bg: '#F8F9FA'
               }
             },
+            boxShadow: {
+              'comic': '3px 3px 0px 0px #6B5B5B',
+              'comic-hover': '1px 1px 0px 0px #6B5B5B',
+              'pixel': '4px 4px 0px 0px rgba(0,0,0,0.1)',
+            },
             animation: {
-              'bounce-slow': 'bounce 3s infinite',
-              'wiggle': 'wiggle 0.5s ease-in-out',
-              'pop': 'pop 0.3s ease-out forwards',
+              'float': 'float 3s ease-in-out infinite',
+              'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+              'flash': 'flash 0.5s linear infinite',
+              'attack-fwd': 'attackFwd 0.3s ease-out forwards',
             },
             keyframes: {
-              wiggle: {
-                '0%, 100%': { transform: 'rotate(-3deg)' },
-                '50%': { transform: 'rotate(3deg)' },
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-5px)' },
               },
-              pop: {
-                '0%': { transform: 'scale(0.8)', opacity: '0' },
-                '100%': { transform: 'scale(1)', opacity: '1' },
+              shake: {
+                '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+              },
+              flash: {
+                '0%, 100%': { opacity: '1' },
+                '50%': { opacity: '0.3' },
+              },
+              attackFwd: {
+                '0%': { transform: 'translate(0, 0)' },
+                '50%': { transform: 'translate(20px, -20px)' },
+                '100%': { transform: 'translate(0, 0)' },
               }
             }
           },
@@ -44,44 +73,12 @@
     </script>
     <style>
       body {
-        background-color: #fdf6f9;
+        background-color: #F0F0F0;
+        /* Simple grid pattern for "virtual world" feel */
+        background-image: linear-gradient(#E5E5E5 1px, transparent 1px), linear-gradient(90deg, #E5E5E5 1px, transparent 1px);
+        background-size: 20px 20px;
         margin: 0;
-        overflow-x: hidden;
-      }
-      .bg-bubbles {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        overflow: hidden;
-      }
-      .bg-bubbles li {
-        position: absolute;
-        display: block;
-        list-style: none;
-        width: 20px;
-        height: 20px;
-        background: rgba(160, 216, 239, 0.4);
-        animation: animate 25s linear infinite;
-        bottom: -150px;
-        border-radius: 50%;
-      }
-      .bg-bubbles li:nth-child(1) { left: 25%; width: 80px; height: 80px; animation-delay: 0s; background: rgba(255, 196, 214, 0.4); }
-      .bg-bubbles li:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; animation-duration: 12s; background: rgba(255, 245, 186, 0.4); }
-      .bg-bubbles li:nth-child(3) { left: 70%; width: 20px; height: 20px; animation-delay: 4s; }
-      .bg-bubbles li:nth-child(4) { left: 40%; width: 60px; height: 60px; animation-delay: 0s; animation-duration: 18s; background: rgba(193, 225, 193, 0.4); }
-      .bg-bubbles li:nth-child(5) { left: 65%; width: 20px; height: 20px; animation-delay: 0s; }
-      .bg-bubbles li:nth-child(6) { left: 75%; width: 110px; height: 110px; animation-delay: 3s; background: rgba(212, 193, 236, 0.4); }
-      .bg-bubbles li:nth-child(7) { left: 35%; width: 150px; height: 150px; animation-delay: 7s; }
-      .bg-bubbles li:nth-child(8) { left: 50%; width: 25px; height: 25px; animation-delay: 15s; animation-duration: 45s; }
-      .bg-bubbles li:nth-child(9) { left: 20%; width: 15px; height: 15px; animation-delay: 2s; animation-duration: 35s; }
-      .bg-bubbles li:nth-child(10) { left: 85%; width: 150px; height: 150px; animation-delay: 0s; animation-duration: 11s; }
-
-      @keyframes animate {
-        0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 50%; }
-        100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; border-radius: 50%; }
+        color: #2D3436;
       }
     </style>
   <script type="importmap">
@@ -91,17 +88,14 @@
     "react/": "https://esm.sh/react@^19.2.1/",
     "react-dom/": "https://esm.sh/react-dom@^19.2.1/",
     "@google/genai": "https://esm.sh/@google/genai@^1.32.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.559.0"
+    "lucide-react": "https://esm.sh/lucide-react@^0.559.0",
+    "canvas-confetti": "https://esm.sh/canvas-confetti@1.6.0"
   }
 }
 </script>
 </head>
   <body>
     <div id="root"></div>
-    <ul class="bg-bubbles">
-      <li></li><li></li><li></li><li></li><li></li>
-      <li></li><li></li><li></li><li></li><li></li>
-    </ul>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

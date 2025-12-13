@@ -12,19 +12,20 @@ export const Button: React.FC<ButtonProps> = ({
   className = '', 
   ...props 
 }) => {
-  const baseStyles = "font-chinese rounded-full shadow-[0_4px_0_rgba(0,0,0,0.1)] transition-all active:shadow-none active:translate-y-1 transform hover:-translate-y-0.5";
+  // Comic/Sticker style base
+  const baseStyles = "font-chinese border-2 border-chiikawa-border rounded-2xl transition-all transform active:translate-y-1 active:shadow-none relative overflow-hidden";
   
   const variants = {
-    primary: "bg-candy-blue text-slate-700 hover:bg-blue-300",
-    secondary: "bg-white text-slate-600 hover:bg-gray-50 border-2 border-slate-100",
-    success: "bg-candy-green text-green-800 hover:bg-green-300",
-    danger: "bg-candy-pink text-rose-800 hover:bg-rose-300",
+    primary: "bg-chiikawa-blue text-chiikawa-text shadow-comic hover:shadow-comic-hover",
+    secondary: "bg-white text-chiikawa-text shadow-comic hover:shadow-comic-hover",
+    success: "bg-chiikawa-green text-green-800 shadow-comic hover:shadow-comic-hover",
+    danger: "bg-chiikawa-pink text-rose-800 shadow-comic hover:shadow-comic-hover",
   };
 
   const sizes = {
-    sm: "px-4 py-2 text-sm",
-    md: "px-6 py-3 text-lg",
-    lg: "px-8 py-4 text-2xl",
+    sm: "px-3 py-1 text-sm",
+    md: "px-6 py-2 text-lg",
+    lg: "px-8 py-3 text-2xl",
   };
 
   return (

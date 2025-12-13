@@ -1,6 +1,6 @@
 import { GameConfig, QuizItem } from './types';
 
-export const TOTAL_QUESTIONS = 20;
+export const TOTAL_QUESTIONS = 10; // Reduced to 10 for a quicker battle pacing
 
 // The 8 options for the mixed mode
 const MIXED_OPTIONS = ['an', 'ang', 'in', 'ing', 'uan', 'uang', 'ong', 'iong'];
@@ -8,31 +8,43 @@ const MIXED_OPTIONS = ['an', 'ang', 'in', 'ing', 'uan', 'uang', 'ong', 'iong'];
 export const GAME_MODES: GameConfig[] = [
   {
     id: 'uan-uang',
-    name: '前鼻音 vs 后鼻音 (uan / uang)',
-    description: '小船 (chuan) 還是 窗戶 (chuang)？',
+    name: 'VS 水箭龜隊 (uan/uang)',
+    description: '前鼻音 vs 后鼻音 - 船/窗',
     pairs: ['uan', 'uang'],
-    color: 'bg-candy-blue'
+    color: 'bg-blue-500',
+    opponentId: 7, // Squirtle
+    opponentName: 'Squirtle',
+    bgGradient: 'from-blue-200 to-blue-100'
   },
   {
     id: 'in-ing',
-    name: '前鼻音 vs 后鼻音 (in / ing)',
-    description: '音樂 (yin) 還是 老鷹 (ying)？',
+    name: 'VS 波波隊 (in/ing)',
+    description: '前鼻音 vs 后鼻音 - 音/鷹',
     pairs: ['in', 'ing'],
-    color: 'bg-candy-pink'
+    color: 'bg-amber-500',
+    opponentId: 16, // Pidgey
+    opponentName: 'Pidgey',
+    bgGradient: 'from-amber-200 to-sky-200'
   },
   {
     id: 'ong-iong',
-    name: '韻母大挑戰 (ong / iong)',
-    description: '紅燈 (hong) 還是 熊貓 (xiong)？',
+    name: 'VS 小火龍隊 (ong/iong)',
+    description: '韻母大挑戰 - 紅/熊',
     pairs: ['ong', 'iong'],
-    color: 'bg-candy-purple'
+    color: 'bg-red-500',
+    opponentId: 4, // Charmander
+    opponentName: 'Charmander',
+    bgGradient: 'from-red-200 to-orange-100'
   },
   {
     id: 'mixed',
-    name: '超級混合挑戰 (Super Mix) 🏆',
-    description: '8個韻母大亂鬥！你能選對嗎？',
+    name: 'VS 夢幻魔王 (Mixed) 🏆',
+    description: '超級混合挑戰！',
     pairs: MIXED_OPTIONS,
-    color: 'bg-candy-yellow'
+    color: 'bg-purple-500',
+    opponentId: 151, // Mew
+    opponentName: 'Mew',
+    bgGradient: 'from-purple-200 to-pink-200'
   }
 ];
 
@@ -104,7 +116,6 @@ export const STATIC_QUESTIONS: Record<string, QuizItem[]> = {
     { character: '送', pinyin: 'sòng', initial: 's', definition: 'Deliver 🎁', correctFinal: 'ong', options: ['ong', 'iong'] }
   ],
   'mixed': [
-    // Mixed questions combining various confusing finals + new an/ang
     { character: '山', pinyin: 'shān', initial: 'sh', definition: 'Mountain ⛰️', correctFinal: 'an', options: MIXED_OPTIONS },
     { character: '上', pinyin: 'shàng', initial: 'sh', definition: 'Up/Above ⬆️', correctFinal: 'ang', options: MIXED_OPTIONS },
     { character: '船', pinyin: 'chuán', initial: 'ch', definition: 'Boat 🛶', correctFinal: 'uan', options: MIXED_OPTIONS },

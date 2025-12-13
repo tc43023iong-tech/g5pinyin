@@ -13,6 +13,9 @@ export interface GameConfig {
   description: string;
   pairs: string[]; // e.g., ["in", "ing"]
   color: string;
+  opponentId: number; // National Dex ID for the sprite
+  opponentName: string;
+  bgGradient: string;
 }
 
 export enum GameState {
@@ -20,5 +23,6 @@ export enum GameState {
   LOADING,
   PLAYING,
   RESULT,
+  GAME_OVER,
   ERROR
 }
