@@ -1,11 +1,59 @@
 import React, { useState, useEffect, useRef } from 'react';
 // @ts-ignore
 import confetti from 'canvas-confetti';
-import { GAME_MODES, TOTAL_QUESTIONS, STATIC_QUESTIONS } from './constants';
+import { GAME_MODES, TOTAL_QUESTIONS, STATIC_QUESTIONS, PREMIUM_POKEMON_IDS } from './constants';
 import { QuizItem, GameState, GameConfig } from './types';
 import { Button } from './components/Button';
 import { BattleScene } from './components/BattleScene';
-import { CircleCheck, CircleX, RefreshCcw, Home, Skull, Trophy, LogOut } from 'lucide-react';
+import { CircleCheck, CircleX, RefreshCcw, Home, Skull, Trophy, LogOut, Disc } from 'lucide-react';
+
+// --- Simple Sound Effect Helper using Web Audio API (No files needed) ---
+const playSound = (type: 'correct' | 'wrong' | 'win') => {
+  const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+  if (!AudioContext) return;
+  
+  const ctx = new AudioContext();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  
+  if (type === 'correct') {
+    // High pitched "Ding!"
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  } else if (type === 'wrong') {
+    // Low pitched "Buzz/Thud"
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  } else if (type === 'win') {
+    // Simple Arpeggio
+    const now = ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.type = 'square';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.1, now + i * 0.1);
+      g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.3);
+      o.start(now + i * 0.1);
+      o.stop(now + i * 0.1 + 0.3);
+    });
+  }
+};
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(GameState.MENU);
@@ -21,7 +69,25 @@ export default function App() {
 
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [hasAnswered, setHasAnswered] = useState(false);
+  
+  // Collection State
+  const [collection, setCollection] = useState<number[]>([]);
+  const [rewardOptions, setRewardOptions] = useState<number[]>([]);
+  const [capturedPokemon, setCapturedPokemon] = useState<number | null>(null);
+
   const timerRef = useRef<number | null>(null);
+
+  // Load collection from local storage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('pinyin-battle-collection');
+    if (saved) {
+      try {
+        setCollection(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to load collection", e);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -79,6 +145,23 @@ export default function App() {
     });
   };
 
+  const generateRewards = () => {
+    // Generate 3 random IDs from our PREMIUM list
+    const options = new Set<number>();
+    
+    // Safety check just in case collection is full (unlikely with this list, but good practice)
+    const availablePool = PREMIUM_POKEMON_IDS;
+
+    while (options.size < 3) {
+      const randomIndex = Math.floor(Math.random() * availablePool.length);
+      const id = availablePool[randomIndex];
+      
+      // Try to give new ones if possible, but allow dupes if we just need to fill slots
+      options.add(id);
+    }
+    setRewardOptions(Array.from(options));
+  };
+
   const startGame = (config: GameConfig) => {
     setSelectedConfig(config);
     // Reset Battle Stats
@@ -88,11 +171,14 @@ export default function App() {
     setCurrentQuestionIndex(0);
     setPlayerAction('idle');
     setEnemyAction('idle');
+    setCapturedPokemon(null);
 
     // Setup Questions
     const allQuestions = STATIC_QUESTIONS[config.id];
-    // Limit questions to TOTAL_QUESTIONS or array length
-    const shuffled = [...allQuestions].sort(() => Math.random() - 0.5).slice(0, TOTAL_QUESTIONS);
+    const questionLimit = TOTAL_QUESTIONS;
+    
+    // Shuffle and slice
+    const shuffled = [...allQuestions].sort(() => Math.random() - 0.5).slice(0, questionLimit);
     setQuestions(shuffled);
     setEnemyHP(shuffled.length); // Enemy HP = Number of questions
     
@@ -100,7 +186,6 @@ export default function App() {
   };
 
   const nextQuestion = () => {
-    // If player died, game over already handled
     if (playerHP <= 0) return;
 
     if (currentQuestionIndex < questions.length - 1) {
@@ -110,10 +195,26 @@ export default function App() {
       setPlayerAction('idle');
       setEnemyAction('idle');
     } else {
-      // Victory
-      setGameState(GameState.RESULT);
-      setTimeout(triggerVictoryConfetti, 500);
+      // Victory -> Capture Phase
+      playSound('win');
+      generateRewards();
+      setGameState(GameState.CAPTURE);
     }
+  };
+
+  const handleCapture = (pokemonId: number) => {
+    playSound('win');
+    setCapturedPokemon(pokemonId);
+    
+    // Add to collection if not already owned
+    if (!collection.includes(pokemonId)) {
+      const newCollection = [...collection, pokemonId];
+      setCollection(newCollection);
+      localStorage.setItem('pinyin-battle-collection', JSON.stringify(newCollection));
+    }
+
+    triggerVictoryConfetti();
+    setGameState(GameState.RESULT);
   };
 
   const handleAnswer = (option: string) => {
@@ -126,24 +227,28 @@ export default function App() {
     setFeedback(isCorrect ? 'correct' : 'wrong');
 
     if (isCorrect) {
+      // Play Sound
+      playSound('correct');
+
       // Attack Logic
       setPlayerAction('attack');
       setEnemyAction('damage');
-      triggerAttackConfetti(); // FIREWORKS!
+      triggerAttackConfetti(); 
       
-      // Delay HP reduction slightly to match animation
       setTimeout(() => {
         setEnemyHP(prev => Math.max(0, prev - 1));
       }, 200);
 
-      // Next turn
       timerRef.current = window.setTimeout(() => {
          nextQuestion();
       }, 1500);
 
     } else {
+      // Play Sound
+      playSound('wrong');
+
       // Damage Logic
-      setEnemyAction('attack'); // Enemy attacks (visual imagination)
+      setEnemyAction('attack'); 
       setPlayerAction('damage');
       
       const newHP = playerHP - 1;
@@ -152,13 +257,10 @@ export default function App() {
       }, 200);
 
       if (newHP <= 0) {
-        // Game Over
         timerRef.current = window.setTimeout(() => {
            setGameState(GameState.GAME_OVER);
         }, 1500);
       } else {
-         // Continue but retry or move on? 
-         // For this quiz, we move on but they lost HP
          timerRef.current = window.setTimeout(() => {
             nextQuestion();
          }, 1500);
@@ -169,48 +271,78 @@ export default function App() {
   // -- RENDER HELPERS --
 
   const renderMenu = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 max-w-md mx-auto relative z-10 bg-slate-100">
-      
-      {/* Title Card */}
-      <div className="bg-white border-4 border-poke-ui rounded-xl p-6 mb-6 text-center shadow-pixel w-full relative">
-         <div className="flex justify-center mb-4">
-             <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" alt="Pokeball" className="w-16 h-16 animate-spin-slow" />
-         </div>
-        <h1 className="text-4xl font-chinese text-slate-800 mt-2 tracking-widest">
-          Pinyin Battle
-        </h1>
-        <p className="font-sans text-slate-500 mt-2">Choose your opponent!</p>
-      </div>
-      
-      <div className="grid gap-4 w-full">
-        {GAME_MODES.map((mode) => (
-          <button
-            key={mode.id}
-            onClick={() => startGame(mode)}
-            className={`
-              relative overflow-hidden
-              bg-white hover:bg-slate-50
-              border-2 border-poke-ui rounded-xl
-              p-3 shadow-pixel hover:translate-y-[2px] hover:shadow-none
-              transition-all duration-100
-              flex items-center gap-4 text-left group
-            `}
-          >
-            {/* Sprite Icon */}
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center border border-slate-200 group-hover:bg-slate-200">
-               <img 
-                 src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mode.opponentId}.png`} 
-                 alt={mode.opponentName}
-                 className="w-14 h-14 object-contain" 
-                />
-            </div>
-            
-            <div className="flex-1">
-              <span className="font-chinese text-xl text-slate-800 block">{mode.name}</span>
-              <span className="text-slate-500 text-xs font-sans">{mode.description}</span>
-            </div>
-          </button>
-        ))}
+    <div className="flex flex-col min-h-screen bg-slate-100 pb-8">
+      <div className="flex flex-col items-center p-4 max-w-md mx-auto relative z-10 w-full">
+        
+        {/* Title Card */}
+        <div className="bg-white border-4 border-poke-ui rounded-xl p-6 mb-6 text-center shadow-pixel w-full relative">
+           <div className="flex justify-center mb-4">
+               <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" alt="Pokeball" className="w-16 h-16 animate-spin-slow" />
+           </div>
+          <h1 className="text-4xl font-chinese text-slate-800 mt-2 tracking-widest">
+            Pinyin Battle
+          </h1>
+          <p className="font-sans text-slate-500 mt-2">Choose your opponent!</p>
+        </div>
+        
+        {/* Game Modes */}
+        <div className="grid gap-4 w-full mb-8">
+          {GAME_MODES.map((mode) => (
+            <button
+              key={mode.id}
+              onClick={() => startGame(mode)}
+              className={`
+                relative overflow-hidden
+                bg-white hover:bg-slate-50
+                border-2 border-poke-ui rounded-xl
+                p-3 shadow-pixel hover:translate-y-[2px] hover:shadow-none
+                transition-all duration-100
+                flex items-center gap-4 text-left group
+              `}
+            >
+              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center border border-slate-200 group-hover:bg-slate-200">
+                 <img 
+                   src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mode.opponentId}.png`} 
+                   alt={mode.opponentName}
+                   className="w-14 h-14 object-contain" 
+                  />
+              </div>
+              
+              <div className="flex-1">
+                <span className="font-chinese text-xl text-slate-800 block">{mode.name}</span>
+                <span className="text-slate-500 text-xs font-sans">{mode.description}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Collection Section */}
+        <div className="w-full bg-white border-4 border-slate-300 rounded-xl p-4 shadow-sm">
+           <h3 className="text-xl font-chinese text-slate-700 mb-3 flex items-center gap-2">
+             <Disc size={24} className="text-red-500" />
+             My Pokedex ({collection.length})
+           </h3>
+           
+           {collection.length === 0 ? (
+             <div className="text-center py-6 text-slate-400 font-mono text-sm">
+               Finish a game to catch your first Pokemon!
+             </div>
+           ) : (
+             <div className="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto p-1 custom-scrollbar">
+               {collection.map(id => (
+                 <div key={id} className="aspect-square bg-slate-50 rounded border border-slate-200 flex items-center justify-center hover:bg-yellow-50 transition-colors">
+                    <img 
+                      src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`} 
+                      className="w-full h-full object-contain"
+                      loading="lazy"
+                      alt={`Pokemon ${id}`}
+                    />
+                 </div>
+               ))}
+             </div>
+           )}
+        </div>
+
       </div>
     </div>
   );
@@ -226,11 +358,9 @@ export default function App() {
         
         {/* Battle Screen Area */}
         <div className="bg-slate-800 rounded-none md:rounded-t-xl overflow-hidden shadow-2xl relative">
-           {/* Home / Exit Button */}
            <button 
              onClick={() => setGameState(GameState.MENU)}
              className="absolute top-3 left-3 z-30 bg-white/90 hover:bg-white text-slate-700 p-2 rounded-lg border-2 border-slate-300 shadow-sm transition-transform active:scale-95 flex items-center gap-1 font-bold text-xs"
-             title="Return to Menu"
            >
              <LogOut size={16} />
              <span>EXIT</span>
@@ -240,7 +370,7 @@ export default function App() {
               config={selectedConfig}
               playerHP={playerHP}
               enemyHP={enemyHP}
-              maxEnemyHP={TOTAL_QUESTIONS}
+              maxEnemyHP={questions.length}
               playerAction={playerAction}
               enemyAction={enemyAction}
            />
@@ -249,20 +379,19 @@ export default function App() {
         {/* Text Box / Dialog Area */}
         <div className="bg-slate-800 border-t-4 border-slate-600 p-4 md:rounded-b-xl shadow-2xl flex-1 flex flex-col">
            
-           {/* Question Box */}
            <div className="bg-white/95 border-4 border-slate-400 rounded-lg p-4 mb-4 min-h-[120px] relative">
-               {/* Question Content */}
-               <div className="flex flex-col items-center">
-                  <h2 className="text-6xl font-chinese text-slate-800 mb-2">{question.character}</h2>
+               <div className="flex flex-col items-center text-center">
+                  <h2 className="font-chinese text-slate-800 mb-2 text-6xl">
+                    {question.character}
+                  </h2>
                   <div className="bg-yellow-100 px-3 py-1 rounded text-sm text-yellow-800 font-bold mb-2">
-                     Definition: {question.definition}
+                     {question.definition}
                   </div>
                   <div className="text-2xl font-mono text-slate-600">
                      {question.initial}<span className="underline decoration-4 decoration-slate-300 mx-1">???</span>
                   </div>
                </div>
 
-               {/* Feedback Overlay */}
                {feedback && (
                  <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-lg backdrop-blur-[1px]">
                     <div className={`px-6 py-2 rounded-full font-bold text-white shadow-lg animate-pop
@@ -274,7 +403,6 @@ export default function App() {
                )}
            </div>
 
-           {/* Move Selection (Options) */}
            <div className={`grid gap-3 ${isMultiOption ? 'grid-cols-2' : 'grid-cols-2'}`}>
               {question.options.map((opt) => (
                   <button
@@ -295,29 +423,71 @@ export default function App() {
            </div>
 
            <div className="mt-4 flex justify-end items-center text-slate-400 text-xs font-mono">
-               <span>ROUND {currentQuestionIndex + 1}/{TOTAL_QUESTIONS}</span>
+               <span>ROUND {currentQuestionIndex + 1}/{questions.length}</span>
            </div>
         </div>
       </div>
     );
   };
 
+  const renderCapture = () => {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-slate-900 relative text-white">
+         <div className="text-center mb-8">
+            <h2 className="text-3xl font-chinese text-yellow-400 mb-2 animate-bounce">A Wild Pokemon Appeared!</h2>
+            <p className="font-mono text-slate-300">Choose one to catch!</p>
+         </div>
+
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+            {rewardOptions.map((id, index) => (
+              <button
+                key={id}
+                onClick={() => handleCapture(id)}
+                className="group relative bg-slate-800 border-4 border-slate-600 rounded-2xl p-6 flex flex-col items-center justify-center hover:bg-slate-700 hover:border-yellow-400 hover:-translate-y-2 transition-all duration-300 shadow-xl"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                 <div className="absolute -top-4 -right-4 bg-red-500 text-white font-bold px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg text-sm border-2 border-white">
+                    I Choose You!
+                 </div>
+                 <div className="w-32 h-32 relative">
+                    <div className="absolute inset-0 bg-white/10 rounded-full blur-xl group-hover:bg-yellow-400/20 transition-colors"></div>
+                    <img 
+                      src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`} 
+                      className="w-full h-full object-contain relative z-10 drop-shadow-lg"
+                      alt="Pokemon"
+                    />
+                 </div>
+                 <div className="mt-4 w-full h-2 bg-slate-900 rounded-full overflow-hidden">
+                    <div className="w-2/3 h-full bg-green-500"></div>
+                 </div>
+              </button>
+            ))}
+         </div>
+      </div>
+    );
+  }
+
   const renderResult = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-yellow-50 relative">
-        <div className="bg-white w-full max-w-md p-8 rounded-xl shadow-xl border-4 border-poke-ui text-center">
-          <div className="flex justify-center -mt-16 mb-4">
-             <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${selectedConfig?.opponentId}.gif`} className="w-24 h-24 object-contain" />
-          </div>
-
-          <h2 className="text-3xl font-chinese text-slate-800 mb-2">Victory!</h2>
-          <p className="text-slate-500 mb-6 font-mono">You defeated the wild {selectedConfig?.opponentName}!</p>
+        <div className="bg-white w-full max-w-md p-8 rounded-xl shadow-xl border-4 border-poke-ui text-center animate-in zoom-in duration-300">
           
-          <div className="flex justify-center gap-2 mb-8">
-             <Trophy size={48} className="text-yellow-500" />
+          <div className="flex justify-center -mt-16 mb-4 relative">
+             <div className="absolute inset-0 animate-ping opacity-20 bg-yellow-400 rounded-full"></div>
+             <img 
+               src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${capturedPokemon}.png`} 
+               className="w-40 h-40 object-contain drop-shadow-2xl z-10" 
+             />
           </div>
 
-          <div className="space-y-3">
+          <h2 className="text-4xl font-chinese text-slate-800 mb-2">Gotcha!</h2>
+          <p className="text-slate-500 mb-6 font-mono font-bold">New Pokemon was caught!</p>
+          
+          <div className="flex flex-col gap-3">
+             <div className="bg-slate-100 p-4 rounded-lg text-sm text-slate-600 font-mono mb-2">
+                This Pokemon has been added to your Pokedex. Collect them all!
+             </div>
+
             <Button onClick={() => startGame(selectedConfig!)} className="w-full justify-center !bg-blue-500 !text-white !border-blue-700">
                Battle Again
             </Button>
@@ -350,6 +520,7 @@ export default function App() {
     <div className="min-h-screen font-sans bg-slate-50">
       {gameState === GameState.MENU && renderMenu()}
       {gameState === GameState.PLAYING && renderGame()}
+      {gameState === GameState.CAPTURE && renderCapture()}
       {gameState === GameState.RESULT && renderResult()}
       {gameState === GameState.GAME_OVER && renderGameOver()}
     </div>

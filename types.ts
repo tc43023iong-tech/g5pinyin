@@ -22,6 +22,7 @@ export enum GameState {
   MENU,
   LOADING,
   PLAYING,
+  CAPTURE, // New state for choosing a reward
   RESULT,
   GAME_OVER,
   ERROR

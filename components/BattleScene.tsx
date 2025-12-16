@@ -23,12 +23,23 @@ export const BattleScene: React.FC<BattleSceneProps> = ({
   const enemySprite = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${config.opponentId}.gif`;
 
   const enemyHealthPercent = (enemyHP / maxEnemyHP) * 100;
+  
+  // Player max HP is fixed at 3 in the game logic
+  const playerMaxHP = 3; 
+  const playerHealthPercent = (playerHP / playerMaxHP) * 100;
 
-  // Function to determine health bar color
+  // Function to determine health bar color (Background)
   const getHealthColor = (percent: number) => {
     if (percent > 50) return 'bg-poke-hp'; // Green
     if (percent > 20) return 'bg-poke-hpylw'; // Yellow
     return 'bg-poke-hpred'; // Red
+  };
+
+  // Function to determine text color (Darker shade for readability)
+  const getTextColor = (percent: number) => {
+    if (percent > 50) return 'text-green-600';
+    if (percent > 20) return 'text-yellow-600';
+    return 'text-red-600';
   };
 
   return (
@@ -49,18 +60,30 @@ export const BattleScene: React.FC<BattleSceneProps> = ({
       </div>
 
       {/* --- ENEMY HUD (Top Left) --- */}
-      {/* Moved down to top-16 to avoid overlapping with the EXIT button at top-3 */}
-      <div className="absolute top-16 left-4 bg-white/90 border-2 border-poke-ui rounded-lg p-2 pr-6 shadow-md min-w-[160px] z-20">
-        <div className="flex justify-between items-baseline mb-1">
-           <span className="font-bold font-sans text-sm uppercase text-slate-800">{config.opponentName}</span>
-           <span className="text-xs font-mono text-slate-500">Lv.{maxEnemyHP}</span>
+      <div className="absolute top-16 left-4 bg-white/90 border-2 border-slate-700 rounded-xl p-2 pr-4 shadow-pixel min-w-[160px] z-20">
+        <div className="flex justify-between items-baseline mb-1 px-1">
+           <span className="font-bold font-sans text-sm uppercase text-slate-800 tracking-wider">{config.opponentName}</span>
+           <span className="text-xs font-mono text-slate-500 font-bold">Lv.{maxEnemyHP}</span>
         </div>
-        <div className="w-full h-3 bg-slate-200 rounded-full border border-slate-400 overflow-hidden relative">
-           <div className="absolute top-0 left-0 h-full w-full bg-slate-300"></div> {/* empty bar */}
-           <div 
-             className={`h-full transition-all duration-500 ease-out ${getHealthColor(enemyHealthPercent)}`} 
-             style={{ width: `${enemyHealthPercent}%` }}
-           ></div>
+        
+        {/* Enemy HP Bar Container */}
+        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-300">
+            {/* Classic HP Label */}
+            <span className="text-[10px] font-black italic text-yellow-400 bg-slate-800 px-1.5 rounded shadow-sm">HP</span>
+            
+            {/* Bar */}
+            <div className="w-full h-4 bg-slate-700 rounded-full border-2 border-slate-300 overflow-hidden relative flex-1">
+               <div className="absolute top-0 left-0 h-full w-full bg-slate-800/20"></div> {/* dark empty background */}
+               <div 
+                 className={`h-full transition-all duration-500 ease-out shadow-[inset_0_2px_0_rgba(255,255,255,0.3)] ${getHealthColor(enemyHealthPercent)}`} 
+                 style={{ width: `${enemyHealthPercent}%` }}
+               ></div>
+            </div>
+        </div>
+        
+        {/* Enemy HP Numbers */}
+        <div className={`text-right text-xs font-mono mt-1 font-black tracking-widest ${getTextColor(enemyHealthPercent)}`}>
+            {enemyHP}/{maxEnemyHP}
         </div>
       </div>
 
@@ -78,19 +101,31 @@ export const BattleScene: React.FC<BattleSceneProps> = ({
       </div>
 
        {/* --- PLAYER HUD (Bottom Right) --- */}
-       <div className="absolute bottom-8 right-4 bg-white/90 border-2 border-poke-ui rounded-lg p-3 shadow-md min-w-[160px]">
-        <div className="flex justify-between items-baseline mb-1">
-           <span className="font-bold font-sans text-sm uppercase text-slate-800">PIKACHU</span>
-           <span className="text-xs font-mono text-slate-500">Lv.5</span>
+       <div className="absolute bottom-8 right-4 bg-white/90 border-2 border-slate-700 rounded-xl p-3 shadow-pixel min-w-[170px]">
+        <div className="flex justify-between items-baseline mb-1 px-1">
+           <span className="font-bold font-sans text-sm uppercase text-slate-800 tracking-wider">PIKACHU</span>
+           <span className="text-xs font-mono text-slate-500 font-bold">Lv.5</span>
         </div>
         
-        {/* Hearts for Player HP */}
-        <div className="flex items-center gap-1 justify-end">
-            {[1, 2, 3].map((heart) => (
-                <div key={heart} className={`w-4 h-4 rounded-full border border-slate-500 ${playerHP >= heart ? 'bg-poke-hpred' : 'bg-slate-300'}`}></div>
-            ))}
+        {/* Player HP Bar Container */}
+        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-300">
+            {/* Classic HP Label */}
+            <span className="text-[10px] font-black italic text-yellow-400 bg-slate-800 px-1.5 rounded shadow-sm">HP</span>
+            
+            {/* Bar */}
+            <div className="w-full h-4 bg-slate-700 rounded-full border-2 border-slate-300 overflow-hidden relative flex-1">
+               <div className="absolute top-0 left-0 h-full w-full bg-slate-800/20"></div>
+               <div 
+                 className={`h-full transition-all duration-500 ease-out shadow-[inset_0_2px_0_rgba(255,255,255,0.3)] ${getHealthColor(playerHealthPercent)}`} 
+                 style={{ width: `${playerHealthPercent}%` }}
+               ></div>
+            </div>
         </div>
-        <div className="text-right text-xs font-mono mt-1 text-slate-600">{playerHP}/3 HP</div>
+        
+        {/* Player HP Numbers */}
+        <div className={`text-right text-xs font-mono mt-1 font-black tracking-widest ${getTextColor(playerHealthPercent)}`}>
+            {playerHP}/{playerMaxHP}
+        </div>
       </div>
 
     </div>

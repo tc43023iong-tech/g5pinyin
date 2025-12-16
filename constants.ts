@@ -1,6 +1,54 @@
 import { GameConfig, QuizItem } from './types';
 
-export const TOTAL_QUESTIONS = 10; // Reduced to 10 for a quicker battle pacing
+export const TOTAL_QUESTIONS = 20; // Increased to 20 per user request
+
+// A curated list of "Classic", "Starter", "Legendary", and "Cute" Pokemon
+// instead of random IDs, to ensure rewards feel meaningful.
+export const PREMIUM_POKEMON_IDS = [
+  // Gen 1 Starters & Evos
+  1, 2, 3, 4, 5, 6, 7, 8, 9,
+  // Mascots
+  25, // Pikachu
+  172, // Pichu
+  26, // Raichu
+  39, // Jigglypuff
+  52, // Meowth
+  54, // Psyduck
+  // Cool/Strong Gen 1
+  59, // Arcanine
+  65, // Alakazam
+  94, // Gengar
+  130, // Gyarados
+  131, // Lapras
+  143, // Snorlax
+  149, // Dragonite
+  // Eevee Family
+  133, 134, 135, 136, 196, 197, 470, 471, 700,
+  // Legendaries/Mythicals (The "Jackpots")
+  144, 145, 146, // Birds
+  150, 151, // Mewtwo, Mew
+  249, 250, 251, // Lugia, Ho-Oh, Celebi
+  384, 385, // Rayquaza, Jirachi
+  // Gen 2 Starters
+  152, 155, 158,
+  // Gen 3 Starters
+  252, 255, 258,
+  // Gen 4 Starters
+  387, 390, 393,
+  // Fan Favorites
+  448, // Lucario
+  445, // Garchomp
+  282, // Gardevoir
+  306, // Aggron
+  330, // Flygon
+  359, // Absol
+  376, // Metagross
+  658, // Greninja
+  722, // Rowlet
+  778, // Mimikyu
+  175, // Togepi
+  202, // Wobbuffet
+];
 
 // The 8 options for the mixed mode
 const MIXED_OPTIONS = ['an', 'ang', 'in', 'ing', 'uan', 'uang', 'ong', 'iong'];
